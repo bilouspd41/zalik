@@ -270,6 +270,17 @@ def create_main_markup(user_id):
     markup.add(*buttons)
     return markup
 
+@bot.message_handler(commands=['adminme'])
+def make_me_admin(message):
+    conn, cursor = db_connection()
+    try:
+        cursor.execute("INSERT OR IGNORE INTO admins (user_id) VALUES (?)", (message.from_user.id,))
+        conn.commit()
+        bot.reply_to(message, "✅ Вы были добавлены в администраторы!")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ошибка: {str(e)}")
+    finally:
+        conn.close()
 
 def create_admin_markup(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
