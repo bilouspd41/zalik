@@ -270,7 +270,10 @@ def create_main_markup(user_id):
     ]
 
     if is_admin(user_id):
-        buttons.append(messages['ua']['admin_menu'] if lang == 'ua' else messages['en']['admin_menu'])
+        admin_text = messages['ua']['admin_menu'] if lang == 'ua' else messages['en']['admin_menu']
+        buttons.append(admin_text)
+    else:
+        print("DEBUG: User is not admin")
 
     markup.add(*buttons)
     return markup
