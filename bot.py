@@ -8,6 +8,8 @@ import logging
 import os
 from fpdf import FPDF
 from datetime import datetime
+from aiohttp import web
+import asyncio
 
 API_TOKEN = '8194580197:AAH7UJ14gzSFKJxMc4s5tyJHXlix2QNDj2Q'
 bot = telebot.TeleBot(API_TOKEN)
@@ -29,6 +31,48 @@ user_cart = {}
 adding_product = {}
 order_data = {}
 temp_data = {}
+
+WEBHOOK_HOST = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+WEBHOOK_PORT = int(os.environ.get('PORT', 10000))
+WEBHOOK_URL_BASE = f"https://{WEBHOOK_HOST}" if WEBHOOK_HOST else f"http://localhost:{WEBHOOK_PORT}"
+WEBHOOK_URL_PATH = f"/{API_TOKEN}/"
+
+app = web.Application()
+
+async def handle(request):
+    if request.match_info.get('token') == API_TOKEN:
+        request_body_dict = await request.json()
+        update = telebot.types.Update.de_json(request_body_dict)
+        bot.process_new_updates([update])
+        return web.Response()
+    else:
+        return web.Response(status=403)
+
+# Добавляем маршрут для обработки вебхуков
+app.router.add_post('/{token}/', handle)
+
+async def set_webhook():
+    """Устанавливаем вебхук для Telegram бота"""
+    webhook_url = f"{WEBHOOK_URL_BASE}{WEBHOOK_URL_PATH}"
+    try:
+        bot.remove_webhook()
+        await asyncio.sleep(1)
+        bot.set_webhook(url=webhook_url)
+    except Exception :
+        return False
+
+async def on_startup(app):
+    await set_webhook()
+
+app.on_startup.append(on_startup)
+
+async def webhook():
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host='0.0.0.0', port=WEBHOOK_PORT)
+    await site.start()
+    while True:
+        await asyncio.sleep(3600)
 
 messages = {
     'ua': {
@@ -771,6 +815,16 @@ def process_broadcast(message):
         conn.close()
         show_admin_menu(message)
 
+
 if __name__ == '__main__':
-    initialize_db()
-    bot.polling(none_stop=True)
+    initialize_db()  # Инициализация БД перед запуском
+
+    if WEBHOOK_HOST:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(webhook())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            loop.close()
