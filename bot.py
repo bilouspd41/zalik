@@ -254,11 +254,11 @@ def is_admin(user_id):
     conn.close()
     return result is not None
 
-@bot.message_handler(commands=['checkadmin'])
-def check_admin(message):
-    user_id = message.from_user.id
-    is_adm = is_admin(user_id)
-    bot.reply_to(message, f"Ваш ID: {user_id}\nСтатус админа: {'Да' if is_adm else 'Нет'}")
+# @bot.message_handler(commands=['checkadmin'])
+# def check_admin(message):
+#     user_id = message.from_user.id
+#     is_adm = is_admin(user_id)
+#     bot.reply_to(message, f"Ваш ID: {user_id}\nСтатус админа: {'Да' if is_adm else 'Нет'}")
 
 def create_main_markup(user_id):
     lang = get_user_lang(user_id)
@@ -292,6 +292,14 @@ def create_admin_markup(lang):
 
 def show_main_menu(message):
     lang = get_user_lang(message.from_user.id)
+    remove_keyboard = types.ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, "Обновление меню...", reply_markup=remove_keyboard)
+
+    # Добавляем небольшую задержку
+    import time
+    time.sleep(0.3)
+
+    # Отправляем новое меню
     bot.send_message(message.chat.id,
                      messages[lang]['welcome'],
                      reply_markup=create_main_markup(message.from_user.id))
