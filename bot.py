@@ -254,6 +254,11 @@ def is_admin(user_id):
     conn.close()
     return result is not None
 
+@bot.message_handler(commands=['checkadmin'])
+def check_admin(message):
+    user_id = message.from_user.id
+    is_adm = is_admin(user_id)
+    bot.reply_to(message, f"Ваш ID: {user_id}\nСтатус админа: {'Да' if is_adm else 'Нет'}")
 
 def create_main_markup(user_id):
     lang = get_user_lang(user_id)
@@ -269,18 +274,6 @@ def create_main_markup(user_id):
 
     markup.add(*buttons)
     return markup
-
-@bot.message_handler(commands=['adminme'])
-def make_me_admin(message):
-    conn, cursor = db_connection()
-    try:
-        cursor.execute("INSERT OR IGNORE INTO admins (user_id) VALUES (?)", (message.from_user.id,))
-        conn.commit()
-        bot.reply_to(message, "✅ Вы были добавлены в администраторы!")
-    except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка: {str(e)}")
-    finally:
-        conn.close()
 
 def create_admin_markup(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
