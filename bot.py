@@ -118,7 +118,11 @@ messages = {
         'active_orders': "🔄 Активних замовлень: {}",
         'product_list': "📦 Список товарів:",
         'admin_panel': "🔐 Адмін-панель",
-        'back_to_admin': "🔙 До адмін-меню"
+        'back_to_admin': "🔙 До адмін-меню",
+        'leave_feedback': "📝 Залишити відгук",
+        'feedback_prompt': "Напишіть ваш відгук:",
+        'feedback_thanks': "Дякуємо за ваш відгук!",
+        'new_feedback': "🚨 Новий відгук\n\nВід: {user}\nID: {user_id}\n\nТекст: {text}"
     },
     'en': {
         'welcome': "Hello! Choose an action from the menu below:",
@@ -163,7 +167,11 @@ messages = {
         'active_orders': "🔄 Active orders: {}",
         'product_list': "📦 Product list:",
         'admin_panel': "🔐 Admin Panel",
-        'back_to_admin': "🔙 Back to admin menu"
+        'back_to_admin': "🔙 Back to admin menu",
+        'leave_feedback': "📝 Leave feedback",
+        'feedback_prompt': "Write your feedback:",
+        'feedback_thanks': "Thank you for your feedback!",
+        'new_feedback': "🚨 New Feedback\n\nFrom: {user}\nID: {user_id}\n\nText: {text}"
     }
 }
 
@@ -266,17 +274,55 @@ def create_main_markup(user_id):
     buttons = [
         '📋 ' + ('Каталог' if lang == 'ua' else 'Catalog'),
         '🛒 ' + ('Замовлення' if lang == 'ua' else 'Order'),
-        'ℹ️ ' + ('Інфо' if lang == 'ua' else 'Info')
+        'ℹ️ ' + ('Інфо' if lang == 'ua' else 'Info'),
+        '📝 ' + ('Відгук' if lang == 'ua' else 'Feedback')
     ]
 
     if is_admin(user_id):
-        admin_text = messages['ua']['admin_menu'] if lang == 'ua' else messages['en']['admin_menu']
-        buttons.append(admin_text)
-    else:
-        print("DEBUG: User is not admin")
+        admin_btn = '🔐 ' + ('Адмін' if lang == 'ua' else 'Admin')
+        buttons.append(admin_btn)
 
     markup.add(*buttons)
     return markup
+
+@bot.message_handler(func=lambda msg: msg.text in [messages['ua']['leave_feedback'], messages['en']['leave_feedback']])
+def handle_feedback_request(message):
+    lang = get_user_lang(message.from_user.id)
+    bot.send_message(message.chat.id, messages[lang]['feedback_prompt'])
+    bot.register_next_step_handler(message, process_feedback)
+
+def process_feedback(message):
+        lang = get_user_lang(message.from_user.id)
+        feedback_text = message.text.strip()
+
+        if not feedback_text:
+            bot.send_message(message.chat.id,
+                             "❗ Будь ласка, введіть текст відгуку" if lang == 'ua' else "❗ Please enter feedback text")
+            return
+
+        try:
+            user = message.from_user
+            user_name = user.first_name
+            if user.last_name:
+                user_name += " " + user.last_name
+
+            # Отправляем админу
+            admin_msg = messages[lang]['new_feedback'].format(
+                user=user_name,
+                user_id=user.id,
+                text=feedback_text
+            )
+            bot.send_message(ADMIN_ID, admin_msg)
+
+            # Подтверждение пользователю
+            bot.send_message(message.chat.id, messages[lang]['feedback_thanks'])
+
+        except Exception as e:
+            logging.error(f"Feedback error: {str(e)}")
+            bot.send_message(message.chat.id,
+                             "❌ Помилка при відправці відгуку" if lang == 'ua' else "❌ Error sending feedback")
+
+        show_main_menu(message)
 
 def create_admin_markup(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -287,16 +333,28 @@ def create_admin_markup(lang):
         messages['ua']['admin_add'] if lang == 'ua' else messages['en']['admin_add'],
         messages['ua']['admin_remove'] if lang == 'ua' else messages['en']['admin_remove'],
         messages['ua']['admin_broadcast'] if lang == 'ua' else messages['en']['admin_broadcast'],
-        messages['ua']['main_menu'] if lang == 'ua' else messages['en']['main_menu']
+        messages['ua']['main_menu'] if lang == 'ua' else messages['en']['main_menu']  # Кнопка выхода
     ]
     markup.add(*buttons)
     return markup
+
+@bot.message_handler(func=lambda msg: msg.text in [messages['ua']['main_menu'], messages['en']['main_menu']])
+def handle_main_menu(message):
+    show_main_menu(message)
+
+@bot.message_handler(func=lambda msg: msg.text in ['🔐 Адмін', '🔐 Admin'])
+def admin_panel(message):
+    if is_admin(message.from_user.id):
+        show_admin_menu(message)
+    else:
+        lang = get_user_lang(message.from_user.id)
+        bot.send_message(message.chat.id, "⛔ Доступ заборонено" if lang == 'ua' else "⛔ Access denied")
 
 
 def show_main_menu(message):
     lang = get_user_lang(message.from_user.id)
     remove_keyboard = types.ReplyKeyboardRemove()
-    bot.send_message(message.chat.id, "Обновление меню...", reply_markup=remove_keyboard)
+    bot.send_message(message.chat.id, "Онволення меню...", reply_markup=remove_keyboard)
 
     # Добавляем небольшую задержку
     import time
