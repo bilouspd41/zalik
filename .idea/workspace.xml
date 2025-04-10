@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca1d7f13-3345-4686-9b13-06807e443a1e" name="Changes" comment="bot v6">
+    <list default="true" id="ca1d7f13-3345-4686-9b13-06807e443a1e" name="Changes" comment="bot v7">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
     </list>
@@ -122,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1744198115994</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="bot v7">
+      <option name="closed" value="true" />
+      <created>1744269393167</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1744269393167</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -132,6 +140,7 @@
     <MESSAGE value="bot v4" />
     <MESSAGE value="bot v5" />
     <MESSAGE value="bot v6" />
-    <option name="LAST_COMMIT_MESSAGE" value="bot v6" />
+    <MESSAGE value="bot v7" />
+    <option name="LAST_COMMIT_MESSAGE" value="bot v7" />
   </component>
 </project>

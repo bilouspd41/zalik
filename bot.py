@@ -247,6 +247,20 @@ def initialize_db():
         conn.close()
 
 
+def add_sample_products(cursor):
+    # Добавление тестовых товаров
+    sample_products = [
+        ('Телефон', 'Смартфон з гарною камерою', 9999.99, 'https://example.com/phone.jpg'),
+        ('Навушники', 'Бездротові навушники', 2499.50, 'https://example.com/headphones.jpg'),
+        ('Чохол', 'Захисний чохол для телефону', 299.00, 'https://example.com/case.jpg')
+    ]
+
+    cursor.executemany('''
+    INSERT INTO products (name, description, price, photo)
+    VALUES (?, ?, ?, ?)
+    ''', sample_products)
+
+
 def get_user_lang(user_id):
     conn, cursor = db_connection()
     cursor.execute("SELECT language FROM users WHERE user_id=?", (user_id,))
@@ -324,6 +338,17 @@ def process_feedback(message):
 
         show_main_menu(message)
 
+
+def process_feedback(message):
+    lang = get_user_lang(message.from_user.id)
+    feedback_text = message.text.strip()
+
+    # Добавьте проверку длины
+    if len(feedback_text) > 1000:
+        msg = "⚠️ Максимальна довжина відгуку - 1000 символів" if lang == 'ua' else "⚠️ Maximum length is 1000 chars"
+        bot.send_message(message.chat.id, msg)
+        return show_main_menu(message)
+
 def create_admin_markup(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     buttons = [
@@ -354,7 +379,8 @@ def admin_panel(message):
 def show_main_menu(message):
     lang = get_user_lang(message.from_user.id)
     remove_keyboard = types.ReplyKeyboardRemove()
-    bot.send_message(message.chat.id, "Онволення меню...", reply_markup=remove_keyboard)
+    bot.send_message(message.chat.id, "🔄 Оновлення меню..." if lang == 'ua' else "🔄 Updating menu...",
+                     reply_markup=remove_keyboard)
 
     # Добавляем небольшую задержку
     import time
